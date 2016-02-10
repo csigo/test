@@ -22,6 +22,7 @@ func init() {
 type redisService struct {
 	port    int
 	workDir string
+	auth    string
 }
 
 func (s *redisService) Start() (int, error) {
@@ -46,15 +47,20 @@ func (s *redisService) Start() (int, error) {
 	pidFile := filepath.Join(s.workDir, "redis.pid")
 	logFile := filepath.Join(s.workDir, "redis.log")
 
-	if err := Exec(
-		s.workDir, nil, nil,
-		"redis-server",
+	cmds := []interface{}{
 		"--daemonize", "yes",
 		"--port", s.port,
 		"--pidfile", pidFile,
 		"--logfile", logFile,
 		"--dir", s.workDir,
-		"--maxmemory", maxMemory); err != nil {
+		"--maxmemory", maxMemory,
+	}
+
+	if s.auth != "" {
+		cmds = append(cmds, "--requirepass", s.auth)
+	}
+
+	if err := Exec(s.workDir, nil, nil, "redis-server", cmds...); err != nil {
 		return 0, fmt.Errorf("fail to start redis server, err:%v", err)
 	}
 
