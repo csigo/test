@@ -36,11 +36,14 @@ var (
 // ServiceType defines type
 type ServiceType string
 
+// ServiceOption defines option function to setup service
+type ServiceOption func(Service) error
+
 // ServiceLauncher defines an interface to create service
 type ServiceLauncher interface {
 	// Start creates and starts an instance of supported service by the give type. It
 	// returns its listening port and the corresponding stop function.
-	Start(ServiceType, ...func(Service) error) (port int, stopFunc func() error, err error)
+	Start(ServiceType, ...ServiceOption) (port int, stopFunc func() error, err error)
 	// StopAll stop all created services
 	StopAll() error
 	// Get retruns service, return nil if no service for the given port
@@ -85,7 +88,7 @@ type serviceLauncherImpl struct {
 }
 
 // Create returns an instance of supported service by the give type
-func (s *serviceLauncherImpl) Start(t ServiceType, options ...func(Service) error) (int, func() error, error) {
+func (s *serviceLauncherImpl) Start(t ServiceType, options ...ServiceOption) (int, func() error, error) {
 	s.Lock()
 	defer s.Unlock()
 
@@ -102,7 +105,7 @@ func (s *serviceLauncherImpl) Start(t ServiceType, options ...func(Service) erro
 	}
 	// apply option functions
 	for _, opt := range options {
-		if err := opt(fac()); err != nil {
+		if err := opt(srv.Service); err != nil {
 			return 0, nil, fmt.Errorf("failed to apply option %v", opt)
 		}
 	}

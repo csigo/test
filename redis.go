@@ -83,3 +83,14 @@ func (s *redisService) Stop() error {
 		"-p", s.port,
 		"shutdown")
 }
+
+func RedisAuth(password string) ServiceOption {
+	return func(s Service) error {
+		rs, ok := s.(*redisService)
+		if !ok {
+			return fmt.Errorf("can't set redis auth with service %v", s)
+		}
+		rs.auth = password
+		return nil
+	}
+}

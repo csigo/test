@@ -59,12 +59,11 @@ func (s *redisSuite) TestStop() {
 }
 
 func (s *redisSuite) TestAuth() {
-	service := &redisService{}
-	service.auth = "password"
-
-	port, err := service.Start()
+	service := NewServiceLauncher()
+	auth := "password"
+	port, stop, err := service.Start(Redis, RedisAuth(auth))
 	s.NoError(err, "start service error")
-	defer service.Stop()
+	defer stop()
 
 	conn, err := redis.Dial("tcp", fmt.Sprintf("localhost:%d", port))
 	s.NoError(err, "get conn error")
@@ -72,7 +71,7 @@ func (s *redisSuite) TestAuth() {
 	_, err = conn.Do("SET", "aaa", "bbb")
 	s.Error(err, "set data should get error without auth")
 
-	_, err = conn.Do("AUTH", service.auth)
+	_, err = conn.Do("AUTH", auth)
 	s.NoError(err, "auth error")
 
 	_, err = conn.Do("SET", "aaa", "bbb")
