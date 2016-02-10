@@ -57,3 +57,23 @@ func (s *redisSuite) TestStop() {
 	s.NoError(err, "port is listenering")
 	ln.Close()
 }
+
+func (s *redisSuite) TestAuth() {
+	service := NewServiceLauncher()
+	auth := "password"
+	port, stop, err := service.Start(Redis, RedisAuth(auth))
+	s.NoError(err, "start service error")
+	defer stop()
+
+	conn, err := redis.Dial("tcp", fmt.Sprintf("localhost:%d", port))
+	s.NoError(err, "get conn error")
+
+	_, err = conn.Do("SET", "aaa", "bbb")
+	s.Error(err, "set data should get error without auth")
+
+	_, err = conn.Do("AUTH", auth)
+	s.NoError(err, "auth error")
+
+	_, err = conn.Do("SET", "aaa", "bbb")
+	s.NoError(err, "set data error")
+}
