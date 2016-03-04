@@ -58,6 +58,9 @@ func (s *esService) Start() (int, error) {
 		fmt.Sprintf("-Des.cluster.name=elasticsearch-csi-test-%s-%d", host, os.Getpid()),
 		"-Des.script.default_lang=groovy",
 		"-Des.script.disable_dynamic=false",
+		"-Des.node.local=true",
+		"-Des.index.number_of_shards=1",
+		"-Des.index.number_of_replicas=0",
 		"-d", "-p", pidFile,
 		"-Des.path.data="+dataDir,
 		"-Des.path.logs="+logsDir); err != nil {
