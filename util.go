@@ -24,14 +24,14 @@ var (
 )
 
 // BookPorts books free portsx
-func BookPorts(num int) ([]int, error) {
+func BookPorts(num int, host ...string) ([]int, error) {
 	result := make([]int, 0, num)
 	for len(result) < num {
 		newPort := atomic.AddInt32(&curPort, -1)
 		if newPort < minPort {
 			return nil, errors.New("running out of available ports")
 		}
-		if portAvailable(newPort) {
+		if portAvailable(newPort, host...) {
 			result = append(result, int(newPort))
 		}
 	}
@@ -112,9 +112,13 @@ func CombineError(errs ...error) error {
 	return nil
 }
 
-func portAvailable(port int32) bool {
+func portAvailable(port int32, host ...string) bool {
 	// Listen to tcp4 only instead of tcp which may return an ipv6 address port.
-	l, err := net.Listen("tcp4", fmt.Sprintf(":%d", port))
+	h := ""
+	if len(h) != 0 {
+		h = host[0]
+	}
+	l, err := net.Listen("tcp4", fmt.Sprintf("%s:%d", h, port))
 	if err != nil {
 		return false
 	}
@@ -124,8 +128,12 @@ func portAvailable(port int32) bool {
 
 // WaitPortAvail waits until the port becomes dialable. It returns error if it's not
 // available after timeout.
-func WaitPortAvail(port int, timeout time.Duration) error {
-	addr := fmt.Sprintf("localhost:%d", port)
+func WaitPortAvail(port int, timeout time.Duration, host ...string) error {
+	h := "localhost"
+	if len(host) != 0 {
+		h = host[0]
+	}
+	addr := fmt.Sprintf("%s:%d", h, port)
 	timer := time.NewTimer(timeout)
 	wait := 1 * time.Second
 	for {
@@ -135,7 +143,7 @@ func WaitPortAvail(port int, timeout time.Duration) error {
 			timer.Stop()
 			return nil
 		}
-		fmt.Printf("Attempt to dial %v failed, err %v", addr, err)
+		fmt.Printf("Attempt to dial %v failed, err %v\n", addr, err)
 		select {
 		case <-timer.C:
 			return fmt.Errorf("attempt to dial %v timeout after %v", port, timeout)
