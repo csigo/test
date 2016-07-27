@@ -104,7 +104,7 @@ func (s *consulService) Start() (port int, err error) {
 		return 0, fmt.Errorf("Fail to write config file(path: %v): %v", configFile, err)
 	}
 	s.cmd = exec.Command(
-		"consul", "agent", "-config-file", configFile,
+		"consul", "agent", "-bind", "127.0.0.1", "-config-file", configFile,
 	)
 	if err := s.cmd.Start(); err != nil {
 		return 0, fmt.Errorf("Fail to start consul: %v", err)
