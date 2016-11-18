@@ -45,8 +45,8 @@ func (s *etcdService) Start() (int, error) {
 
 	s.cmd = exec.Command(
 		"etcd",
-		fmt.Sprintf("-bind-addr=0.0.0.0:%d", s.ports[0]),
-		fmt.Sprintf("-peer-bind-addr=0.0.0.0:%d", s.ports[1]),
+		fmt.Sprintf("--listen-client-urls=http://0.0.0.0:%d", s.ports[0]),
+		fmt.Sprintf("--advertise-client-urls=http://0.0.0.0:%d", s.ports[0]),
 		fmt.Sprintf("-data-dir=%s", s.workDir),
 		fmt.Sprintf("-name=m%d", s.ports[0]),
 	)
@@ -66,5 +66,9 @@ func (s *etcdService) Start() (int, error) {
 
 func (s *etcdService) Stop() error {
 	// close process
-	return s.cmd.Process.Kill()
+	if err := s.cmd.Process.Kill(); err != nil {
+		return err
+	}
+	time.Sleep(time.Second)
+	return nil
 }
