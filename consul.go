@@ -68,18 +68,18 @@ type consulService struct {
 	port int
 }
 
-// Start runs the consul service and returns its port.
-func (s *consulService) Start() (port int, err error) {
+// Start runs the consul service and returns its ip port.
+func (s *consulService) Start() (ipport string, err error) {
 	if err := CheckExecutable("consul"); err != nil {
-		return 0, fmt.Errorf("Consul is not installed: %v", err)
+		return "", fmt.Errorf("Consul is not installed: %v", err)
 	}
 	workDir, err := ioutil.TempDir("", "consul")
 	if err != nil {
-		return 0, fmt.Errorf("Fail to generate work dir: %v", err)
+		return "", fmt.Errorf("Fail to generate work dir: %v", err)
 	}
 	ports, err := BookPorts(5)
 	if err != nil {
-		return 0, fmt.Errorf("Fail to book ports for consul: %v", err)
+		return "", fmt.Errorf("Fail to book ports for consul: %v", err)
 	}
 	config := &consulConfig{
 		BootstrapExpect: 1,
@@ -97,28 +97,28 @@ func (s *consulService) Start() (port int, err error) {
 	}
 	b, err := json.Marshal(config)
 	if err != nil {
-		return 0, fmt.Errorf("Fail to json marshal consul config: %v", err)
+		return "", fmt.Errorf("Fail to json marshal consul config: %v", err)
 	}
 	configFile := filepath.Join(workDir, "consul.conf")
 	if err := ioutil.WriteFile(configFile, b, os.ModePerm); err != nil {
-		return 0, fmt.Errorf("Fail to write config file(path: %v): %v", configFile, err)
+		return "", fmt.Errorf("Fail to write config file(path: %v): %v", configFile, err)
 	}
 	s.cmd = exec.Command(
 		"consul", "agent", "-bind", "127.0.0.1", "-config-file", configFile,
 	)
 	if err := s.cmd.Start(); err != nil {
-		return 0, fmt.Errorf("Fail to start consul: %v", err)
+		return "", fmt.Errorf("Fail to start consul: %v", err)
 	}
 	s.port = config.Ports.HTTP
 
 	// Make sure that the server is running.
 	if err := checkPortListening(s.port, consulChkTimesListen, consulChkDelayListen); err != nil {
-		return 0, fmt.Errorf("Port is not listening: %v", err)
+		return "", fmt.Errorf("Port is not listening: %v", err)
 	}
 	if err := checkLeaderElected(s.port, consulChkTimesLeader, consulChkDelayLeader); err != nil {
-		return 0, fmt.Errorf("Leader election mechanism fails: %v", err)
+		return "", fmt.Errorf("Leader election mechanism fails: %v", err)
 	}
-	return s.port, nil
+	return fmt.Sprintf("localhost:%d", s.port), nil
 }
 
 // checkPortListening checks whether the port is listening or not.

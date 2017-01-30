@@ -25,11 +25,11 @@ type etcdSuite struct {
 func (s *etcdSuite) TestSerivce() {
 	service := &etcdService{}
 
-	port, err := service.Start()
+	ipport, err := service.Start()
 	s.NoError(err, "start service error")
 	defer service.Stop()
 
-	client := etcd.NewClient([]string{fmt.Sprintf("http://localhost:%d", port)})
+	client := etcd.NewClient([]string{fmt.Sprintf("http://%s", ipport)})
 	defer client.Close()
 
 	testNode := "aaa"

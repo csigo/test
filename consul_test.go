@@ -1,8 +1,9 @@
 package test
 
 import (
-	"fmt"
+	"net"
 	"os"
+	"strconv"
 	"testing"
 
 	consul "github.com/hashicorp/consul/api"
@@ -37,8 +38,11 @@ func TestConsulSuite(t *testing.T) {
 
 // TestStartAndStop tests Start() and Stop()
 func (s *ConsulSuite) TestStartAndStop() {
-	port, err := s.service.Start()
+	ipport, err := s.service.Start()
 	s.NoError(err, "No error is expected")
+	_, strPort, err := net.SplitHostPort(ipport)
+	s.NoError(err, "No error is expected")
+	port, _ := strconv.Atoi(strPort)
 	isListening := CheckListening(port)
 	s.True(isListening, "Should be listening")
 
@@ -50,13 +54,16 @@ func (s *ConsulSuite) TestStartAndStop() {
 
 // TestRegisterDeregister tests Register() and Deregister() for consul.
 func (s *ConsulSuite) TestRegisterDeregister() {
-	port, err := s.service.Start()
+	ipport, err := s.service.Start()
 	s.NoError(err, "No error is expected")
+	_, strPort, err := net.SplitHostPort(ipport)
+	s.NoError(err, "No error is expected")
+	port, _ := strconv.Atoi(strPort)
 	isListening := CheckListening(port)
 	s.True(isListening, "Should be listening")
 
 	config := consul.DefaultConfig()
-	config.Address = fmt.Sprintf("127.0.0.1:%d", port)
+	config.Address = ipport
 	client, err := consul.NewClient(config)
 	s.NoError(err, "No error is expected")
 

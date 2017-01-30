@@ -24,23 +24,23 @@ type etcdService struct {
 	cmd     *exec.Cmd
 }
 
-func (s *etcdService) Start() (int, error) {
+func (s *etcdService) Start() (string, error) {
 	// perform default check
 	if err := CheckExecutable("etcd"); err != nil {
-		return 0, err
+		return "", err
 	}
 
 	// booking 2 ports
 	var err error
 	s.ports, err = BookPorts(2)
 	if err != nil {
-		return 0, fmt.Errorf("fail to book ports, err:%v", err)
+		return "", fmt.Errorf("fail to book ports, err:%v", err)
 	}
 
 	// prepare tmp dir
 	s.workDir, err = ioutil.TempDir("", "etcd-test")
 	if err != nil {
-		return 0, fmt.Errorf("fail to prepare tmp dir, err:%v", err)
+		return "", fmt.Errorf("fail to prepare tmp dir, err:%v", err)
 	}
 
 	s.cmd = exec.Command(
@@ -51,17 +51,17 @@ func (s *etcdService) Start() (int, error) {
 		fmt.Sprintf("-name=m%d", s.ports[0]),
 	)
 	if err := s.cmd.Start(); err != nil {
-		return 0, err
+		return "", err
 	}
 
 	for i := 0; i < etcdChkTimes; i++ {
 		time.Sleep(etcdChkDelay)
 		if CheckListening(s.ports[0]) {
-			return s.ports[0], nil
+			return fmt.Sprintf("localhost:%d", s.ports[0]), nil
 		}
 	}
 	// only need region server thrift port
-	return 0, fmt.Errorf("fail to start etcd")
+	return "", fmt.Errorf("fail to start etcd")
 }
 
 func (s *etcdService) Stop() error {

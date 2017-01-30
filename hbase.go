@@ -79,23 +79,23 @@ type hbaseService struct {
 	workDir string
 }
 
-func (s *hbaseService) Start() (int, error) {
+func (s *hbaseService) Start() (string, error) {
 	// perform default check
 	if err := CheckExecutable("java", "hbase", "hbase-daemon.sh"); err != nil {
-		return 0, err
+		return "", err
 	}
 
 	// booking 4 ports
 	var err error
 	s.ports, err = BookPorts(4)
 	if err != nil {
-		return 0, fmt.Errorf("fail to book ports, err:%v", err)
+		return "", fmt.Errorf("fail to book ports, err:%v", err)
 	}
 
 	// prepare tmp dir
 	s.workDir, err = ioutil.TempDir("", "hbase-test")
 	if err != nil {
-		return 0, fmt.Errorf("fail to prepare tmp dir, err:%v", err)
+		return "", fmt.Errorf("fail to prepare tmp dir, err:%v", err)
 	}
 
 	// prepare cfg
@@ -109,7 +109,7 @@ func (s *hbaseService) Start() (int, error) {
 			"ZK_PORT":               s.ports[3],
 			"HBASE_ROOTDIR":         s.workDir,
 		}); err != nil {
-		return 0, fmt.Errorf("fail to prepare cfg file, err:%v", err)
+		return "", fmt.Errorf("fail to prepare cfg file, err:%v", err)
 	}
 
 	// prepare env variables
@@ -120,20 +120,20 @@ func (s *hbaseService) Start() (int, error) {
 	}
 
 	if err := Exec(s.workDir, s.envs, nil, "hbase-daemon.sh", "start", "master"); err != nil {
-		return 0, fmt.Errorf("fail to start hbase master, err:%v", err)
+		return "", fmt.Errorf("fail to start hbase master, err:%v", err)
 	}
 	if err := Exec(s.workDir, s.envs, nil, "hbase-daemon.sh", "start", "thrift"); err != nil {
-		return 0, fmt.Errorf("fail to start hbase thrift, err:%v", err)
+		return "", fmt.Errorf("fail to start hbase thrift, err:%v", err)
 	}
 
 	for i := 0; i < hbaseChkTimes; i++ {
 		time.Sleep(hbaseChkDelay)
 		if s.check() == nil {
-			return s.ports[0], nil
+			return fmt.Sprintf("localhost:%d", s.ports[0]), nil
 		}
 	}
 	// only need region server thrift port
-	return 0, fmt.Errorf("fail to start hbase")
+	return "", fmt.Errorf("fail to start hbase")
 }
 
 func (s *hbaseService) Stop() error {

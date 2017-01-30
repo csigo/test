@@ -2,8 +2,10 @@ package test
 
 import (
 	"fmt"
+	"net"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -44,8 +46,11 @@ func TestDisqueSuite(t *testing.T) {
 // TestStart tests Start() and Stop() through
 func (s *DisqueSuite) TestStartAndStop() {
 	// Test the case that the disque service starts.
-	port, err := s.service.Start()
+	ipport, err := s.service.Start()
 	s.NoError(err, "No error is expected")
+	_, strPort, err := net.SplitHostPort(ipport)
+	s.NoError(err, "No error is expected")
+	port, _ := strconv.Atoi(strPort)
 	isListening := CheckListening(port)
 	s.True(isListening, "Should be listening")
 
