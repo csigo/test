@@ -28,23 +28,23 @@ type esService struct {
 	workDir string
 }
 
-func (s *esService) Start() (int, error) {
+func (s *esService) Start() (string, error) {
 	// perform default check
 	if err := CheckExecutable("elasticsearch"); err != nil {
-		return 0, err
+		return "", err
 	}
 
 	// booking 1 ports
 	ports, err := BookPorts(1)
 	if err != nil {
-		return 0, fmt.Errorf("fail to book ports, err:%v", err)
+		return "", fmt.Errorf("fail to book ports, err:%v", err)
 	}
 	s.port = ports[0]
 
 	// prepare tmp dir
 	s.workDir, err = ioutil.TempDir("", "elasticsearch-test")
 	if err != nil {
-		return 0, fmt.Errorf("fail to prepare tmp dir, err:%v", err)
+		return "", fmt.Errorf("fail to prepare tmp dir, err:%v", err)
 	}
 
 	pidFile := filepath.Join(s.workDir, "elasticsearch.pid")
@@ -64,7 +64,7 @@ func (s *esService) Start() (int, error) {
 		"-d", "-p", pidFile,
 		"-Des.path.data="+dataDir,
 		"-Des.path.logs="+logsDir); err != nil {
-		return 0, fmt.Errorf("fail to start start elastic server, err:%v", err)
+		return "", fmt.Errorf("fail to start start elastic server, err:%v", err)
 	}
 
 	// check if remote port is listening
@@ -74,12 +74,12 @@ func (s *esService) Start() (int, error) {
 			// check if server is ready
 			if !s.isServerAvailable() {
 				s.Stop()
-				return 0, fmt.Errorf("Elastic Search start time out")
+				return "", fmt.Errorf("Elastic Search start time out")
 			}
-			return s.port, nil
+			return fmt.Sprintf("localhost:%d", s.port), nil
 		}
 	}
-	return 0, fmt.Errorf("fail to start elastic search")
+	return "", fmt.Errorf("fail to start elastic search")
 }
 
 func (s *esService) Stop() error {

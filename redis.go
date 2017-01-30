@@ -25,23 +25,23 @@ type redisService struct {
 	auth    string
 }
 
-func (s *redisService) Start() (int, error) {
+func (s *redisService) Start() (string, error) {
 	// perform default check
 	if err := CheckExecutable("redis-server", "redis-cli"); err != nil {
-		return 0, err
+		return "", err
 	}
 
 	// booking 1 ports
 	ports, err := BookPorts(1)
 	if err != nil {
-		return 0, fmt.Errorf("fail to book ports, err:%v", err)
+		return "", fmt.Errorf("fail to book ports, err:%v", err)
 	}
 	s.port = ports[0]
 
 	// prepare tmp dir
 	s.workDir, err = ioutil.TempDir("", "redis-test")
 	if err != nil {
-		return 0, fmt.Errorf("fail to prepare tmp dir, err:%v", err)
+		return "", fmt.Errorf("fail to prepare tmp dir, err:%v", err)
 	}
 
 	pidFile := filepath.Join(s.workDir, "redis.pid")
@@ -61,17 +61,17 @@ func (s *redisService) Start() (int, error) {
 	}
 
 	if err := Exec(s.workDir, nil, nil, "redis-server", cmds...); err != nil {
-		return 0, fmt.Errorf("fail to start redis server, err:%v", err)
+		return "", fmt.Errorf("fail to start redis server, err:%v", err)
 	}
 
 	for i := 0; i < redisChkTimes; i++ {
 		time.Sleep(redisChkDelay)
 		if CheckListening(s.port) {
-			return s.port, nil
+			return fmt.Sprintf("localhost:%d", s.port), nil
 		}
 	}
 	// only need region server thrift port
-	return 0, fmt.Errorf("fail to start redis")
+	return "", fmt.Errorf("fail to start redis")
 }
 
 func (s *redisService) Stop() error {

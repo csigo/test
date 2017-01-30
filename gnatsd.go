@@ -1,9 +1,6 @@
 package test
 
 import (
-	"net"
-	"strconv"
-
 	gnatsd "github.com/nats-io/gnatsd/server"
 	gnatsdtest "github.com/nats-io/gnatsd/test"
 )
@@ -20,16 +17,14 @@ type gnatsdService struct {
 	gnatsd  *gnatsd.Server
 }
 
-func (s *gnatsdService) Start() (int, error) {
+func (s *gnatsdService) Start() (string, error) {
 	// perform default check
 	opts := gnatsdtest.DefaultTestOptions
 	opts.Port = gnatsd.RANDOM_PORT
 	s.gnatsd = gnatsdtest.RunServer(&opts)
 	addr := s.gnatsd.Addr()
-	_, port, _ := net.SplitHostPort(addr.String())
-	gnatsdPort, _ := strconv.Atoi(port)
 
-	return gnatsdPort, nil
+	return addr.String(), nil
 }
 
 func (s *gnatsdService) Stop() error {

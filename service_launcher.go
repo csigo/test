@@ -42,18 +42,18 @@ type ServiceOption func(Service) error
 // ServiceLauncher defines an interface to create service
 type ServiceLauncher interface {
 	// Start creates and starts an instance of supported service by the give type. It
-	// returns its listening port and the corresponding stop function.
-	Start(ServiceType, ...ServiceOption) (port int, stopFunc func() error, err error)
+	// returns its listening ip:port and the corresponding stop function.
+	Start(ServiceType, ...ServiceOption) (ipport string, stopFunc func() error, err error)
 	// StopAll stop all created services
 	StopAll() error
-	// Get retruns service, return nil if no service for the given port
-	Get(port int) interface{}
+	// Get retruns service, return nil if no service for the given ipport
+	Get(ipport string) interface{}
 }
 
 // Service represents a service
 type Service interface {
 	// Start launches the service and return its listening port
-	Start() (int, error)
+	Start() (string, error)
 	// Stop stops the service
 	Stop() error
 }
@@ -75,20 +75,20 @@ func RegisterService(t ServiceType, f ServiceFactory) {
 // NewServiceLauncher returns an instance of ServiceLauncher
 func NewServiceLauncher() ServiceLauncher {
 	return &serviceLauncherImpl{
-		services: map[int]Service{},
+		services: map[string]Service{},
 	}
 }
 
 // serviceLauncherImpl implements ServiceLauncher
 type serviceLauncherImpl struct {
 	// service stores created services
-	services map[int]Service
+	services map[string]Service
 	// mutx to protected services
 	sync.Mutex
 }
 
 // Create returns an instance of supported service by the give type
-func (s *serviceLauncherImpl) Start(t ServiceType, options ...ServiceOption) (int, func() error, error) {
+func (s *serviceLauncherImpl) Start(t ServiceType, options ...ServiceOption) (string, func() error, error) {
 	s.Lock()
 	defer s.Unlock()
 
@@ -96,7 +96,7 @@ func (s *serviceLauncherImpl) Start(t ServiceType, options ...ServiceOption) (in
 	fac, ok := srvFactories.facs[t]
 	srvFactories.RUnlock()
 	if !ok {
-		return 0, nil, fmt.Errorf("unsupported service type %v", t)
+		return "", nil, fmt.Errorf("unsupported service type %v", t)
 	}
 	// guard with state checker
 	srv := &stateChkService{
@@ -106,17 +106,17 @@ func (s *serviceLauncherImpl) Start(t ServiceType, options ...ServiceOption) (in
 	// apply option functions
 	for _, opt := range options {
 		if err := opt(srv.Service); err != nil {
-			return 0, nil, fmt.Errorf("failed to apply option %v", opt)
+			return "", nil, fmt.Errorf("failed to apply option %v", opt)
 		}
 	}
 	// start service
-	port, err := srv.Start()
+	ipport, err := srv.Start()
 	if err != nil {
-		return 0, nil, fmt.Errorf("unable to start service %v, err %v", t, err)
+		return "", nil, fmt.Errorf("unable to start service %v, err %v", t, err)
 	}
 	// store raw service
-	s.services[port] = srv.Service
-	return port, srv.Stop, nil
+	s.services[ipport] = srv.Service
+	return ipport, srv.Stop, nil
 }
 
 // StopAll stop all created services
@@ -128,15 +128,15 @@ func (s *serviceLauncherImpl) StopAll() error {
 	for _, s := range s.services {
 		errs = append(errs, s.Stop())
 	}
-	s.services = map[int]Service{}
+	s.services = map[string]Service{}
 	return CombineError(errs...)
 }
 
-// StopAll stop all created services
-func (s *serviceLauncherImpl) Get(port int) interface{} {
+// Get return service by givne ip port
+func (s *serviceLauncherImpl) Get(ipport string) interface{} {
 	s.Lock()
 	defer s.Unlock()
-	return s.services[port]
+	return s.services[ipport]
 }
 
 // stateChkService helps to guard status of the embed service
@@ -146,15 +146,15 @@ type stateChkService struct {
 	state int32
 }
 
-func (s *stateChkService) Start() (int, error) {
+func (s *stateChkService) Start() (string, error) {
 	if !atomic.CompareAndSwapInt32(&s.state, stateNew, stateStarting) {
-		return 0, fmt.Errorf("state is not ready")
+		return "", fmt.Errorf("state is not ready")
 	}
-	port, err := s.Service.Start()
+	ipport, err := s.Service.Start()
 	if err == nil {
 		atomic.StoreInt32(&s.state, stateReady)
 	}
-	return port, err
+	return ipport, err
 }
 
 func (s *stateChkService) Stop() error {

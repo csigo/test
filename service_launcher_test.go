@@ -1,7 +1,6 @@
 package test
 
 import (
-	"fmt"
 	"net"
 	"testing"
 	"time"
@@ -25,25 +24,25 @@ func (s *srvLauncherSuite) TestAll() {
 	sl := NewServiceLauncher()
 
 	var err error
-	var ports = make([]int, 5)
+	var ipports = make([]string, 5)
 
-	ports[0], _, err = sl.Start(ZooKeeper)
+	ipports[0], _, err = sl.Start(ZooKeeper)
 	s.NoError(err)
 
-	ports[1], _, err = sl.Start(Redis)
+	ipports[1], _, err = sl.Start(Redis)
 	s.NoError(err)
 
-	ports[2], _, err = sl.Start(Etcd)
+	ipports[2], _, err = sl.Start(Etcd)
 	s.NoError(err)
 
-	ports[3], _, err = sl.Start(HBase)
+	ipports[3], _, err = sl.Start(HBase)
 	s.NoError(err)
 
-	ports[4], _, err = sl.Start(Gnatsd)
+	ipports[4], _, err = sl.Start(Gnatsd)
 	s.NoError(err)
 
-	for _, port := range ports {
-		_, err := net.DialTimeout("tcp", fmt.Sprintf("localhost:%d", port), time.Second)
+	for _, ipport := range ipports {
+		_, err := net.DialTimeout("tcp", ipport, time.Second)
 		s.NoError(err)
 	}
 
@@ -51,8 +50,8 @@ func (s *srvLauncherSuite) TestAll() {
 
 	time.Sleep(5 * time.Second)
 
-	for _, port := range ports {
-		_, err := net.DialTimeout("tcp", fmt.Sprintf("localhost:%d", port), time.Second)
+	for _, ipport := range ipports {
+		_, err := net.DialTimeout("tcp", ipport, time.Second)
 		s.Error(err)
 	}
 }
