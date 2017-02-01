@@ -26,8 +26,9 @@ func init() {
 }
 
 type esService struct {
-	port    int
-	workDir string
+	port      int
+	workDir   string
+	container *docker.Container
 }
 
 func (s *esService) Start() (string, error) {
@@ -105,13 +106,18 @@ func (s *esService) Stop() error {
 }
 
 // StartDocker start the service via docker
-func (s *esService) StartDocker(cl *docker.Client) (string, error) {
-	return "", fmt.Errorf("implmenet this")
+func (s *esService) StartDocker(cl *docker.Client) (ipport string, err error) {
+	s.container, ipport, err = StartContainer(
+		cl,
+		SetImage("elasticsearch:2.4"),
+		SetExposedPorts([]string{"9200/tcp", "9300/tcp"}),
+	)
+	return ipport, err
 }
 
 // StopDocker stops the service via docker
 func (s *esService) StopDocker(cl *docker.Client) error {
-	return fmt.Errorf("implmenet this")
+	return RemoveContainer(cl, s.container)
 }
 
 // Wait until Easltic Search cluster status is good enough for operations
