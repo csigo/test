@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"os/exec"
 	"time"
+
+	"github.com/fsouza/go-dockerclient"
 )
 
 const (
@@ -94,4 +96,14 @@ func (s *disqueService) Stop() error {
 		return fmt.Errorf("Fail to stop the service: %v", err)
 	}
 	return nil
+}
+
+// StartDocker start the service via docker
+func (s *disqueService) StartDocker(cl *docker.Client) (string, error) {
+	return "", fmt.Errorf("implmenet this")
+}
+
+// StopDocker stops the service via docker
+func (s *disqueService) StopDocker(cl *docker.Client) error {
+	return fmt.Errorf("implmenet this")
 }

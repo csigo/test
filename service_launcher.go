@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"sync"
 	"sync/atomic"
+
+	"github.com/fsouza/go-dockerclient"
 )
 
 // supported service types
@@ -56,6 +58,10 @@ type Service interface {
 	Start() (string, error)
 	// Stop stops the service
 	Stop() error
+	// StartDocker launches the service and return its listening port via docker
+	StartDocker(*docker.Client) (string, error)
+	// Stop stops the service via docker
+	StopDocker(*docker.Client) error
 }
 
 // ServiceFactory represents service factory
@@ -144,13 +150,18 @@ func (s *serviceLauncherImpl) Get(ipport string) interface{} {
 type stateChkService struct {
 	Service
 	state int32
+	cl    *docker.Client
 }
 
-func (s *stateChkService) Start() (string, error) {
+func (s *stateChkService) Start() (ipport string, err error) {
 	if !atomic.CompareAndSwapInt32(&s.state, stateNew, stateStarting) {
 		return "", fmt.Errorf("state is not ready")
 	}
-	ipport, err := s.Service.Start()
+	if s.cl != nil {
+		ipport, err = s.Service.StartDocker(s.cl)
+	} else {
+		ipport, err = s.Service.Start()
+	}
 	if err == nil {
 		atomic.StoreInt32(&s.state, stateReady)
 	}
@@ -160,6 +171,9 @@ func (s *stateChkService) Start() (string, error) {
 func (s *stateChkService) Stop() error {
 	if !atomic.CompareAndSwapInt32(&s.state, stateReady, stateStopped) {
 		return fmt.Errorf("state is not ready")
+	}
+	if s.cl != nil {
+		return s.Service.StopDocker(s.cl)
 	}
 	return s.Service.Stop()
 }

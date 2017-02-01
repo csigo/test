@@ -5,6 +5,8 @@ import (
 	"io/ioutil"
 	"os/exec"
 	"time"
+
+	"github.com/fsouza/go-dockerclient"
 )
 
 const (
@@ -19,9 +21,10 @@ func init() {
 }
 
 type etcdService struct {
-	ports   []int
-	workDir string
-	cmd     *exec.Cmd
+	ports     []int
+	workDir   string
+	cmd       *exec.Cmd
+	container *docker.Container
 }
 
 func (s *etcdService) Start() (string, error) {
@@ -71,4 +74,19 @@ func (s *etcdService) Stop() error {
 	}
 	time.Sleep(time.Second)
 	return nil
+}
+
+// StartDocker start the service via docker
+func (s *etcdService) StartDocker(cl *docker.Client) (ipport string, err error) {
+	s.container, ipport, err = StartContainer(
+		cl,
+		SetImage("quay.io/coreos/etcd"),
+		SetExposedPorts([]string{"2379/tcp"}),
+	)
+	return ipport, err
+}
+
+// StopDocker stops the service via docker
+func (s *etcdService) StopDocker(cl *docker.Client) error {
+	return RemoveContainer(cl, s.container)
 }

@@ -5,6 +5,8 @@ import (
 	"io/ioutil"
 	"path/filepath"
 	"time"
+
+	"github.com/fsouza/go-dockerclient"
 )
 
 const (
@@ -80,6 +82,16 @@ func (s *zkService) Stop() error {
 	return Exec(
 		s.workDir, nil, nil,
 		"zkServer.sh", "stop", s.cfgFile())
+}
+
+// StartDocker start the service via docker
+func (s *zkService) StartDocker(cl *docker.Client) (string, error) {
+	return "", fmt.Errorf("implmenet this")
+}
+
+// StopDocker stops the service via docker
+func (s *zkService) StopDocker(cl *docker.Client) error {
+	return fmt.Errorf("implmenet this")
 }
 
 func (s *zkService) cfgFile() string {

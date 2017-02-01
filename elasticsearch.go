@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"strconv"
 	"time"
+
+	"github.com/fsouza/go-dockerclient"
 )
 
 const (
@@ -100,6 +102,16 @@ func (s *esService) Stop() error {
 		return fmt.Errorf("Kill process %d error: %s", pid, err)
 	}
 	return nil
+}
+
+// StartDocker start the service via docker
+func (s *esService) StartDocker(cl *docker.Client) (string, error) {
+	return "", fmt.Errorf("implmenet this")
+}
+
+// StopDocker stops the service via docker
+func (s *esService) StopDocker(cl *docker.Client) error {
+	return fmt.Errorf("implmenet this")
 }
 
 // Wait until Easltic Search cluster status is good enough for operations

@@ -5,6 +5,8 @@ import (
 	"io/ioutil"
 	"path/filepath"
 	"time"
+
+	"github.com/fsouza/go-dockerclient"
 )
 
 const (
@@ -20,9 +22,10 @@ func init() {
 }
 
 type redisService struct {
-	port    int
-	workDir string
-	auth    string
+	port      int
+	workDir   string
+	auth      string
+	container *docker.Container
 }
 
 func (s *redisService) Start() (string, error) {
@@ -82,6 +85,21 @@ func (s *redisService) Stop() error {
 		"-h", "localhost",
 		"-p", s.port,
 		"shutdown")
+}
+
+// StartDocker start the service via docker
+func (s *redisService) StartDocker(cl *docker.Client) (ipport string, err error) {
+	s.container, ipport, err = StartContainer(
+		cl,
+		SetImage("redis"),
+		SetExposedPorts([]string{"6379/tcp"}),
+	)
+	return ipport, err
+}
+
+// StopDocker stops the service via docker
+func (s *redisService) StopDocker(cl *docker.Client) error {
+	return RemoveContainer(cl, s.container)
 }
 
 func RedisAuth(password string) ServiceOption {

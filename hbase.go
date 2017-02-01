@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"path/filepath"
 	"time"
+
+	"github.com/fsouza/go-dockerclient"
 )
 
 const (
@@ -141,6 +143,16 @@ func (s *hbaseService) Stop() error {
 		Exec(s.workDir, s.envs, nil, "hbase-daemon.sh", "stop", "thrift"),
 		Exec(s.workDir, s.envs, nil, "hbase-daemon.sh", "stop", "master"),
 	)
+}
+
+// StartDocker start the service via docker
+func (s *hbaseService) StartDocker(cl *docker.Client) (string, error) {
+	return "", fmt.Errorf("implmenet this")
+}
+
+// StopDocker stops the service via docker
+func (s *hbaseService) StopDocker(cl *docker.Client) error {
+	return fmt.Errorf("implmenet this")
 }
 
 func (s *hbaseService) RunScript(script string) error {

@@ -15,6 +15,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/fsouza/go-dockerclient"
 	consul "github.com/hashicorp/consul/api"
 )
 
@@ -169,4 +170,14 @@ func (s *consulService) Stop() error {
 	}
 	return fmt.Errorf("Fail to stop consul service within time limit: %v",
 		consulChkTimesListen*consulChkDelayListen)
+}
+
+// StartDocker start the service via docker
+func (s *consulService) StartDocker(cl *docker.Client) (string, error) {
+	return "", fmt.Errorf("implmenet this")
+}
+
+// StopDocker stops the service via docker
+func (s *consulService) StopDocker(cl *docker.Client) error {
+	return fmt.Errorf("implmenet this")
 }
