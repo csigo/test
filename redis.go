@@ -12,12 +12,14 @@ import (
 const (
 	redisChkTimes = 10
 	redisChkDelay = 1 * time.Second
-	maxMemory     = "64mb"
 )
 
 func init() {
 	RegisterService(Redis, func() Service {
-		return &redisService{}
+		return &redisService{
+			maxMemory: "64mb",
+			port:      6379,
+		}
 	})
 }
 
@@ -25,6 +27,7 @@ type redisService struct {
 	port      int
 	workDir   string
 	auth      string
+	maxMemory string
 	container *docker.Container
 }
 
@@ -56,7 +59,7 @@ func (s *redisService) Start() (string, error) {
 		"--pidfile", pidFile,
 		"--logfile", logFile,
 		"--dir", s.workDir,
-		"--maxmemory", maxMemory,
+		"--maxmemory", s.maxMemory,
 	}
 
 	if s.auth != "" {
@@ -89,10 +92,21 @@ func (s *redisService) Stop() error {
 
 // StartDocker start the service via docker
 func (s *redisService) StartDocker(cl *docker.Client) (ipport string, err error) {
+	Cmds := []string{
+		"redis-server",
+		"--port", fmt.Sprintf("%d", s.port),
+		"--maxmemory", s.maxMemory,
+		"--maxmemory-policy", "allkeys-lru", // TODO: default to allkeys-lru, will it change
+	}
+	if s.auth != "" {
+		Cmds = append(Cmds, "--requirepass", s.auth)
+	}
+
 	s.container, ipport, err = StartContainer(
 		cl,
-		SetImage("redis"),
-		SetExposedPorts([]string{"6379/tcp"}),
+		SetImage("redis:3-alpine"),
+		SetExposedPorts([]string{fmt.Sprintf("%d/tcp", s.port)}),
+		SetCommand(Cmds),
 	)
 	return ipport, err
 }
@@ -100,6 +114,28 @@ func (s *redisService) StartDocker(cl *docker.Client) (ipport string, err error)
 // StopDocker stops the service via docker
 func (s *redisService) StopDocker(cl *docker.Client) error {
 	return RemoveContainer(cl, s.container)
+}
+
+func RedisMemory(maxMem string) ServiceOption {
+	return func(s Service) error {
+		rs, ok := s.(*redisService)
+		if !ok {
+			return fmt.Errorf("can't set redis auth with service %v", s)
+		}
+		rs.maxMemory = maxMem
+		return nil
+	}
+}
+
+func RedisPort(port int) ServiceOption {
+	return func(s Service) error {
+		rs, ok := s.(*redisService)
+		if !ok {
+			return fmt.Errorf("can't set redis port with service %v", s)
+		}
+		rs.port = port
+		return nil
+	}
 }
 
 func RedisAuth(password string) ServiceOption {
