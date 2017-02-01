@@ -82,6 +82,11 @@ func (s *etcdService) StartDocker(cl *docker.Client) (ipport string, err error) 
 		cl,
 		SetImage("quay.io/coreos/etcd"),
 		SetExposedPorts([]string{"2379/tcp", "2380/tcp"}),
+		SetCommand([]string{
+			"/usr/local/bin/etcd",
+			"-advertise-client-urls=http://0.0.0.0:2379",
+			"-listen-client-urls=http://0.0.0.0:2379",
+		}),
 	)
 	return ipport, err
 }
