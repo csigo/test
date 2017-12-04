@@ -1,6 +1,7 @@
 package test
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"testing"
@@ -35,16 +36,17 @@ func (s *elasticSearchSuite) TestSerivce() {
 	s.NoError(err)
 
 	index := "csi.common.test"
+	ctx := context.Background()
 
 	// clear index before test
-	_, err = client.DeleteIndex(index).Do()
+	_, err = client.DeleteIndex(index).Do(ctx)
 	s.NoError(err)
 	// create index
-	createResp, err := client.CreateIndex(index).Do()
+	createResp, err := client.CreateIndex(index).Do(ctx)
 	s.NoError(err)
 	s.True(createResp.Acknowledged)
 	// clear index after test
-	deleteResp, err := client.DeleteIndex(index).Do()
+	deleteResp, err := client.DeleteIndex(index).Do(ctx)
 	s.NoError(err)
 	s.True(deleteResp.Acknowledged)
 
