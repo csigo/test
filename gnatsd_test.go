@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/nats-io/nats"
+	"github.com/nats-io/nats.go"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -29,7 +29,7 @@ func (s *gnatsdSuite) aTestSerivce() {
 	s.NoError(err, "start service error")
 	defer service.Stop()
 
-	nc, err := nats.Connect(fmt.Sprintf("nats://localhost:%d", port))
+	nc, err := nats.Connect(fmt.Sprintf("nats://localhost:%s", port))
 	s.NoError(err, "create conn error")
 	c, err := nats.NewEncodedConn(nc, nats.JSON_ENCODER)
 	s.NoError(err, "create encoded conn error")
@@ -60,11 +60,11 @@ func (s *gnatsdSuite) TestStop() {
 	port, err := service.Start()
 	s.NoError(err, "start service error")
 
-	_, err = net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", port))
+	_, err = net.Listen("tcp", fmt.Sprintf("127.0.0.1:%s", port))
 	s.Error(err, "port is not listenering")
 	service.Stop()
 
-	ln, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", port))
+	ln, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%s", port))
 	s.NoError(err, "port is listenering")
 	ln.Close()
 }

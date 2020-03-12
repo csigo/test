@@ -29,7 +29,7 @@ func (s *zkSuite) TestSerivce() {
 	s.NoError(err, "start service error")
 	defer service.Stop()
 
-	conn, _, err := zk.Connect([]string{fmt.Sprintf("localhost:%d", port)}, 3*time.Second)
+	conn, _, err := zk.Connect([]string{fmt.Sprintf("localhost:%s", port)}, 3*time.Second)
 	s.NoError(err, "get conn error")
 
 	_, err = conn.Create("/testhome", nil, 0, zk.WorldACL(zk.PermAll))
@@ -47,13 +47,13 @@ func (s *zkSuite) TestStop() {
 	port, err := service.Start()
 	s.NoError(err, "start service error")
 
-	_, err = net.Listen("tcp", fmt.Sprintf(":%d", port))
+	_, err = net.Listen("tcp", fmt.Sprintf(":%s", port))
 	s.Error(err, "port is not listenering")
 	service.Stop()
 
 	time.Sleep(3 * time.Second)
 
-	ln, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+	ln, err := net.Listen("tcp", fmt.Sprintf(":%s", port))
 	s.NoError(err, "port is listenering")
 	ln.Close()
 }
