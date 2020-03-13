@@ -29,7 +29,7 @@ func (s *redisSuite) TestSerivce() {
 	s.NoError(err, "start service error")
 	defer service.Stop()
 
-	conn, err := redis.Dial("tcp", fmt.Sprintf("localhost:%d", port))
+	conn, err := redis.Dial("tcp", fmt.Sprintf("localhost:%s", port))
 	s.NoError(err, "get conn error")
 
 	_, err = conn.Do("SET", "aaa", "bbb")
@@ -47,13 +47,13 @@ func (s *redisSuite) TestStop() {
 	port, err := service.Start()
 	s.NoError(err, "start service error")
 
-	_, err = net.Listen("tcp", fmt.Sprintf(":%d", port))
+	_, err = net.Listen("tcp", fmt.Sprintf(":%s", port))
 	s.Error(err, "port is not listenering")
 	service.Stop()
 
 	time.Sleep(3 * time.Second)
 
-	ln, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+	ln, err := net.Listen("tcp", fmt.Sprintf(":%s", port))
 	s.NoError(err, "port is listenering")
 	ln.Close()
 }
@@ -65,7 +65,7 @@ func (s *redisSuite) TestAuth() {
 	s.NoError(err, "start service error")
 	defer stop()
 
-	conn, err := redis.Dial("tcp", fmt.Sprintf("localhost:%d", port))
+	conn, err := redis.Dial("tcp", fmt.Sprintf("localhost:%s", port))
 	s.NoError(err, "get conn error")
 
 	_, err = conn.Do("SET", "aaa", "bbb")
