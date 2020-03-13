@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/17media/test"
+	"github.com/csigo/test"
 )
 
 func run() {

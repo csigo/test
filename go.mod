@@ -1,4 +1,4 @@
-module github.com/17media/test
+module github.com/csigo/test
 
 go 1.13
 
